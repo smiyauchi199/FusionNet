@@ -24,22 +24,7 @@ def show_figure(loss_log,index=None):
     plt.ylabel('loss')
     if index:plt.savefig("./result/dice(%d).png"%index)
     else: plt.show()
-    #plt.clf()
-    #plt.show()
 
-# def load_3ddata():
-#     Path_to_trainingDatas = "./datas/segmentation_train.h5"
-#     Path_to_testingDatas = "./datas/segmentation_test.h5"
-#     tr_File = h5py.File(Path_to_trainingDatas, 'r')
-#     ts_File = h5py.File(Path_to_testingDatas, 'r')
-
-#     tr_Data = tr_File['train'][:]
-#     ts_Data = ts_File['test'][:]
-
-#     # to close the file
-#     tr_File.close()
-#     ts_File.close()
-#     return tr_Data, ts_Data
 
 def load_3ddata(idx: int):
     # ----Path_to_trainingDatas = "./datas/segmentation_train.h5"
@@ -59,19 +44,10 @@ def load_3ddata(idx: int):
     x_train = x_train['arr_0']
 
     x_val = np.load(os.path.join(dataset_path, fanme_val))
-    # x_test = np.load(os.path.join(dataset_path, fname_test))
 #-------------------------------
-    #tr_Data = tr_File
-    # tr_Data = tr_File['arr_0'][:]
-    # print(tr_Data.shape)
-    # ts_Data = ts_File['test'][:]
-
     print(x_train.shape)
     print(x_val.shape)
 
-    # to close the file
-    # x_train.close()
-    # x_val.close()
     return x_train, x_val
 
 def show_result(loss_log):
@@ -82,7 +58,6 @@ def show_result(loss_log):
     pd.DataFrame(loss_log).plot(ax=ax)
     ax.grid(True)  # 方格
     ax.set(ylim=(1e-2, 1e0), xlabel='epoch', ylabel='loss')  # y轴
-    #plt.gca().set_xlim(0, 140)
     ax.legend()
     fig.tight_layout()
     fig.savefig("./result/dice.png", dpi=300)
