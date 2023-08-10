@@ -3,8 +3,10 @@
 import numpy as np
 import json
 import keras
-from models import inputs4d, lvae_model, load_3ddata, \
-                   Adam, stoper, reduce_lr, show_result
+from models.layers import inputs4d
+from models.lvae import lvae_model
+from models.processing import load_3ddata, show_result
+from models.config import Adam, stoper, reduce_lr
 from models.loss import dice_loss_every_frame, dice_loss_sum_3d
 from argparse import ArgumentParser
 from matplotlib import pyplot as plt
@@ -13,13 +15,11 @@ import pandas as pd
 import h5py
 from tensorflow.keras.utils import plot_model
 from models.fusion4test import cnn_encoder4plusfusion, cnn_decoder4plusfusion
-# model 初期化
-
 
 def main(argv):        
-    encoder = fusion3Frameencoder()
+    encoder = cnn_encoder4plusfusion()
     lvae        = lvae_model(add_kl_loss=True)
-    decoder     = fusion3Framedecoder()
+    decoder     = cnn_decoder4plusfusion()
 
     f, firstfusion, secondfusion, thirdfusion, fourthfusion  = encoder(inputs4d)
     #z = e
@@ -46,30 +46,8 @@ def main(argv):
     train_y = np.concatenate((y[0:start], y[end:]), axis=0)
     print(train_x.shape, train_y.shape)
 
-    # train_x = x[10:]
-    # train_y = y[10:]
-
-    # val_x = x[:10]
-    # val_y = y[:10]
-
-    # val_x = x[start:end]
-    # val_y = y[start:end]
-
-    # train_x = list(np.split(train_x, train_x.shape[0]//10))
-    # train_y = list(np.split(train_y, train_y.shape[0]//10))
-
-    # def gen():
-    #     for i, j in zip(train_x, train_y):
-    #         yield (i, j)
-
-    # dataset = tf.data.Dataset.from_generator(gen, output_signature=(
-    #          tf.TensorSpec(shape=(None, 80, 80, 80, 5), dtype=tf.float32),
-    #          tf.TensorSpec(shape=(None, 80, 80, 80, 10), dtype=tf.float32)))
-    # train
-
     model.compile(loss=[dice_loss_sum_3d,kl_loss], metrics=dice_loss_every_frame, optimizer=Adam)
     h = model.fit(x=train_x, y=[train_y, train_y], batch_size=10, epochs=350, callbacks=[stoper, reduce_lr])
-    #h = model.fit(dataset, batch_size=10, epochs=25, validation_data=(val_x, val_y), callbacks=[stoper, reduce_lr])
     h.history.pop('loss')
     h.history.pop('lr')
 
@@ -84,15 +62,11 @@ def main(argv):
         pd.DataFrame(loss_log).plot(ax=ax)
         ax.grid(True)  # 方格
         ax.set(ylim=(1e-2, 1e0), xlabel='epoch', ylabel='loss')  # y轴
-        #plt.gca().set_xlim(0, 140)
         ax.legend()
         fig.tight_layout()
         fig.savefig("./result/FusionHybridNetworkInput(with KL)159_{}.png".format(name), dpi=300)
-        #plt.show()
     show_result(h.history , name = str(start) + '-' + str(end))
-# def kl_loss(a, b):
-#     print(b)
-#     return b
+
 
 def read_datas(idx):
     trdata, valdata = load_3ddata(idx)
@@ -127,10 +101,8 @@ def read_datas(idx):
         return b
     # data
     batch = 10
-    #model.compile(loss=dice_loss_sum_3d, metrics=dice_loss_every_frame, optimizer=Adam)
     model.compile(loss=[dice_loss_sum_3d,kl_loss], metrics=dice_loss_every_frame, optimizer=Adam)
     h = model.fit(x=x, y=y, validation_data=[a, b], batch_size=10, epochs=500, callbacks=[stoper, reduce_lr])
-    #h = model.fit(dataset, batch_size=10, epochs=25, validation_data=(val_x, val_y), callbacks=[stoper, reduce_lr])
     h.history.pop('loss')
     h.history.pop('lr')
 
@@ -145,11 +117,9 @@ def read_datas(idx):
         pd.DataFrame(loss_log).plot(ax=ax)
         ax.grid(True)  # 方格
         ax.set(ylim=(1e-2, 1e0), xlabel='epoch', ylabel='loss')  # y轴
-        #plt.gca().set_xlim(0, 140)
         ax.legend()
         fig.tight_layout()
         fig.savefig("./Fusion13579_datanumber{}.png".format(name), dpi=300)
-        #plt.show()
     show_result(h.history , name = str(idx))
 
 if __name__ == "__main__":
